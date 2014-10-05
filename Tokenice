@@ -1,0 +1,98 @@
+// Jenifer Rodriguez Casas - Tokenize 
+#include <stdlib.h>
+#include <stdio.h>
+
+void 
+change(char *c) //Change the character
+{
+	c = '\0';
+}
+
+int 
+compare(int a,int b)
+{
+	if (a >= b){
+		return b;
+	}else {
+		return a;
+	}
+}
+
+int 
+len(char *s)
+{
+  int n;
+  for (n = 0; *s != '\0'; s++)
+    n++;
+  return n;
+}
+
+int
+isword(char s)
+{
+	if (s == ' '){
+		return 0;
+	}else if(s=='\t'){
+		return 0;
+	}else if(s=='\r'){
+		return 0;
+	}else if(s=='\n'){
+		return 0;
+	}else{
+		return 1;
+	}
+}
+
+int
+mytokenize(char *p_str, char **p_args, int maxargs)
+{
+	int cont , longt, numargs;
+	cont = 0;
+	numargs = 0;
+	longt = len(p_str);
+	int pal;
+	pal=isword(*p_str );
+						
+	  	if (longt != 0){
+	  		p_args[numargs]=&(p_str[cont]);
+	  		
+	  		while (longt >= cont){
+	  			if(pal==0){ // It isn't a word
+					while (pal==0){
+						change(p_str);
+						p_str++;
+						cont++; 
+						pal = isword(*p_str );
+					}
+					p_args[numargs]=&(p_str[cont]);//
+				}else if (pal==1){	// It is a valid word
+					p_args[numargs]=&(p_str[cont]);//
+					pal = isword(*p_str );
+					while (pal==1){
+						p_str++;
+						cont++; 
+						pal = isword(*p_str );
+					}	
+					numargs++;
+				}	
+			}
+			return numargs; 
+		}else{
+			return 0; 
+	}	
+}
+
+int
+main(int argc, char* argv[])
+{
+	//char str[]= "May the force be with you";
+	char str[]= "Oh fuck what I had done";
+	char* args[25]; 
+	int result;
+	int	maxargs = 50;
+
+	result = mytokenize(str, args, maxargs);
+	
+	printf("el resultado es %d\n", (compare(result,maxargs)));
+exit(0);
+}
