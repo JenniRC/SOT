@@ -1,0 +1,87 @@
+/*
+	gcc -c -Wall -Wshadow anagrams.c
+	gcc -o 8.anagrams anagrams.o
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+		/*	My type */
+	typedef struct anagram {
+		char word;
+		struct anagram *next;
+	}Anagram;
+
+	typedef	struct mylist
+	{
+    	struct anagram *first;
+		struct anagram *last;
+		int length;
+	}Mylist;
+
+int
+gothrought(char* word1,char* word2){
+	int i;
+	int j;
+	int count;
+	count=0;
+	
+	for ( i=0 ; i<strlen(word1) ; i++ ){ 
+		for ( j=0 ; j<strlen(word2) ; j++ ){
+			if (word1[i]==word2[j]){
+				word2[j]= ' ';
+				count++;
+				break;
+			}
+		}
+	}
+	return count;
+}
+
+int
+isanagram(char* word1,char* word2){
+	int anam;
+	anam=gothrought(word1,word2);
+	if ( strlen(word1) == strlen(word2) && (anam == strlen(word1)) ){
+		return 1;
+	}else{
+		return 0;
+	}
+}
+
+char
+choosecharacter(char* word1,char* word2){
+	int i;
+	char rc[30];
+		
+	for ( i=0 ; i<strlen(word1) ; i++ ){ 
+		if (word1[i]==word2[i]){
+				rc[i]=word1[i];
+				break;
+			}
+		}
+		return *rc;
+}
+
+int 
+main(int argc,char*argv[])
+{
+	int i;
+	i = 1;
+	char word1[]= "papa";  
+	char word2[]= "papa";  
+//	Mylist *anagramlist ;
+	while (i<argc){
+		printf("Arg num %d : %s\n",i,argv[i]);
+		i++;
+		}
+printf("numero de argumentos %d :",argc);
+
+	if (isanagram(word1,word2)){
+		printf("Sí es\n");
+	}else{
+		printf("No es\n");
+	}
+
+	exit(0);
+}
