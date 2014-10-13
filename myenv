@@ -1,0 +1,38 @@
+/*
+	gcc -c -Wall -Wshadow myenv.c
+	gcc -o 8.myenv myenv.o
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <err.h>
+#include <unistd.h>
+
+int 
+main(int argc,char*argv[])
+{
+	int i;
+	i = 1;
+	char *variable;
+	pid_t p;
+	uid_t  uid;
+
+	p = getpid();
+	printf("PID : %d\n", p);
+
+	uid = getuid();
+	printf("UID : %d\n", uid);
+	
+	while (i<argc){
+		variable = getenv(argv[i]);
+		if(variable != NULL){
+			printf("%s: ",argv[i]);
+			printf(" %s\n", variable);
+		}
+		if (variable == NULL)
+			fprintf(stderr,"error : %s does not exits\n", argv[i]);
+		i++;
+	}
+	exit(0);
+}
