@@ -8,7 +8,7 @@
 
 		/*	My type */
 	typedef struct anagram {
-		char word;
+		char *word;
 		struct anagram *next;
 	}Anagram;
 
@@ -20,10 +20,8 @@
 	}Mylist;
 
 int
-gothrought(char* word1,char* word2){
-	int i;
-	int j;
-	int count;
+gothrough(char* word1,char* word2){
+	int i,j,count;
 	count=0;
 	
 	for ( i=0 ; i<strlen(word1) ; i++ ){ 
@@ -41,7 +39,9 @@ gothrought(char* word1,char* word2){
 int
 isanagram(char* word1,char* word2){
 	int anam;
-	anam=gothrought(word1,word2);
+	char* waux = malloc(sizeof(word2));
+	strcpy(waux,word2);
+	anam=gothrough(word1,waux);
 	if ( strlen(word1) == strlen(word2) && (anam == strlen(word1)) ){
 		return 1;
 	}else{
@@ -49,39 +49,131 @@ isanagram(char* word1,char* word2){
 	}
 }
 
-char
+char*
 choosecharacter(char* word1,char* word2){
-	int i;
-	char rc[30];
-		
+	int i,j;
+	j=0;
+	char* rc = malloc(27 * sizeof (char));
+/*only keep the character in the same position in the both words*/		
 	for ( i=0 ; i<strlen(word1) ; i++ ){ 
 		if (word1[i]==word2[i]){
-				rc[i]=word1[i];
-				break;
+				rc[j]=word1[i];
+				j++;
 			}
 		}
-		return *rc;
+		return rc;
+}
+
+/* Functions*/
+int
+emptylist(Mylist* list){
+	return list->first == NULL;
+ }
+void 
+initlist (Mylist *list){
+		list->first = NULL;
+		list->last = NULL;
+		list->length = 0;
+	//	printf("estoy en el init\n");
+}
+int 
+addlist (Mylist *list, char *word){
+  Anagram *anagram;
+  /*test if we have enough memory for this new element*/
+  if ((anagram = (Anagram *) malloc (sizeof (Anagram))) == NULL)
+  	return -1;
+    
+  if ((anagram->word = (char *) malloc (50 * sizeof (char))) == NULL)
+    return -1;
+  
+  strcpy (anagram->word, word);
+ // printf("addList::Estoy añadiendo\n");
+  if (emptylist(list)){
+  //	printf("list empty \n");
+  	anagram->next=NULL;
+  	list->first = anagram;
+  	list->last = anagram;
+
+  }else{
+  	anagram->next = list->first;
+  	list->first = anagram;
+  }
+
+  list->length++;
+  //printf("list length %d", list->length);
+  return 0;
+}
+
+void
+printlist(Mylist *list){
+	Anagram *anag_aux = list->first;
+	//printf(" printlist::Voy a imprimir\n");
+		while(anag_aux != NULL){
+			printf(" %s ,",anag_aux->word);
+			anag_aux = anag_aux->next;
+		} 
 }
 
 int 
 main(int argc,char*argv[])
 {
-	int i;
+	//printf("numero de argumentos %d :",argc-1);
+	int i,j;
 	i = 1;
 	char word1[]= "papa";  
-	char word2[]= "papa";  
-//	Mylist *anagramlist ;
+	char word2[]= "ppaa";  
+	//char resultado [];
+	Mylist *anagramlist=malloc(sizeof(Anagram));
+	initlist(anagramlist);
+	Mylist *argumentlist=malloc(sizeof(Anagram));
+	initlist(argumentlist);
+
 	while (i<argc){
 		printf("Arg num %d : %s\n",i,argv[i]);
+		addlist(argumentlist,argv[i]);
 		i++;
 		}
-printf("numero de argumentos %d :",argc);
+	i=0;
+	j=0;
+/* Pointer aux to check if we have anagrams in our list of arguments*/ 
+		Anagram *paux=argumentlist->first;
+		Anagram *paux2=paux->next;//este se mueve
+	while(j < argc-2 ){
+		for (i = 1; i < argumentlist->length; i++){
+			if (isanagram(paux->word,paux2->word) && (i>1) && (i<argumentlist->length)){/*y compruebo la j para ver si es la primera */
+				addlist(anagramlist,paux->word);	
 
-	if (isanagram(word1,word2)){
-		printf("Sí es\n");
-	}else{
-		printf("No es\n");
+			}	/*if we have an anagram,then we put it in our list*/
+			if (isanagram(paux->word,paux2->word) && (i==1)){
+				addlist(anagramlist,paux->word);
+				addlist(anagramlist,paux2->word);
+			}
+
+			if (isanagram(paux->word,paux2->word) && (i==argumentlist->length)){
+				addlist(anagramlist,paux2->word);
+			}
+		
+			if (paux2->next != NULL)
+				paux2=paux2->next;
+			if (paux2->next == NULL){
+					break;
+			}
+
+
+		}
+
+		if (paux->next != NULL){
+			paux = paux->next;
+			paux2= paux->next;
+		}
+
+		j++;
 	}
+	//	printf("Hemos pasado los bucles\n");
 
+		//addlist(anagramlist,word1);
+		printlist(anagramlist);
+	//	printf("[%s]\n",choosecharacter(word1,word2));
+		//printf("Arg num %c :",*resultado);
 	exit(0);
 }
