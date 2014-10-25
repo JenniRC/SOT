@@ -103,8 +103,7 @@ main(int argc,char*argv[])
 					if(nr < 0)						err(1, "bad reading");
 					if(nr > 0){
 						nr = nr/(sizeof(int));
-						printf("nr%d\n",nr);
-						
+
 						for (j = 0 ;j < nr;j++){
 							coord_aux->x=buffer[j];
 							j++;
