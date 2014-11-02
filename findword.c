@@ -11,13 +11,12 @@
 #include <err.h>
 #include <unistd.h>
 #include <dirent.h>
-
-/*Types*/
+#include <limits.h> /* PATH_MAX */
 
 int
-static myls(DIR *d){
+static myls(){
 
-	d = opendir(".");
+	DIR *d = opendir(".");
 	struct dirent *de;
 
 	if(d == NULL) {
@@ -29,6 +28,7 @@ static myls(DIR *d){
 	
 	closedir(d);
 	return 1;
+
 }
 
 int
@@ -37,7 +37,7 @@ static is_dir(char *d_name){
 	
 	int numero;
 	numero = stat(d_name, &st);
-	printf("%s numero=%i esdir? %d\n", d_name, numero, st.st_mode & S_IFDIR);
+	//printf("%s numero=%i esdir? %d\n", d_name, numero, st.st_mode & S_IFDIR);
 
 	return st.st_mode & S_IFDIR;
 }
@@ -45,29 +45,73 @@ static is_dir(char *d_name){
 int
 static is_file(char *d_name){
 	struct stat st;
-	
+		
 	int numero;
 	numero = stat(d_name, &st);
-	printf("%s numero=%i esfil? %d\n", d_name, numero, st.st_mode & S_IFREG);
-
+	//printf("%s numero=%i esfil? %d\n", d_name, numero, st.st_mode & S_IFREG);
+  //(st.st_mode & S_IFMT) == S_IFREG
 	return st.st_mode & S_IFREG;
 }
 
-int 
+int
 main(int argc,char*argv[])
 {
-	int a= is_file(argv[2]); //como a=0 no es file
-	printf("a es =%d\n",a );
-    int b = is_dir(argv[2]);// como b!=0 es directorio
-	printf("b es =%d\n",b );
+
 	int i=0;
-	//myls();
-	while (i<argc){
-		printf("Arg num %d : %s\n",i,argv[i]);
-		i++;
+	FILE *myFile;
+//	myls();
+
+	if (argc == 2){
+		DIR *d = opendir(".");
+		struct dirent *de;
+
+		if(d == NULL) {
+			err(1, ".");
 		}
-	/*palabra a buscar es argv[1]
-		directorios son argv[2],argv[3]...
-	*/
+		while((de = readdir(d)) != NULL) {
+			char * pointeur = &de->d_name[0];
+			if (is_file(pointeur)== S_IFREG){
+
+				myFile = fopen(de->d_name, "r");
+				char firstword [20];
+				fscanf(myFile,"%s ",firstword);
+					if(strcmp(firstword,argv[1])==0){
+						char *buf;
+						buf = malloc(sizeof (PATH_MAX));
+						getcwd(buf,PATH_MAX);
+						printf("%s/%s\n", buf,de->d_name);
+					}
+			}
+		}
+		
+		closedir(d);
+	}
+		if (argc > 2){
+
+		DIR *d = opendir(argv[2]);
+		myls();
+		struct dirent *de;
+
+		if(d == NULL) {
+			err(1, argv[2]);
+		}
+		while((de = readdir(d)) != NULL) {
+			char * pointeur = &de->d_name[0];
+			if (is_file(pointeur)== S_IFREG){
+
+				myFile = fopen(de->d_name, "r");
+				char firstword [20];
+				fscanf(myFile,"%s ",firstword);
+					if(strcmp(firstword,argv[1])==0){
+						char *buf;
+						buf = malloc(sizeof (PATH_MAX));
+						getcwd(buf,PATH_MAX);
+						printf("%s/%s\n", buf,de->d_name);
+					}
+			}
+		}
+		closedir(d);
+	}
 	exit(0);
+
 }
