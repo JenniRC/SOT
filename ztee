@@ -1,0 +1,119 @@
+/*
+	gcc -c -Wall -Wshadow  ztee.c && gcc -o ztee  ztee.o && ./ztee fo < cheri.gz
+*/
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <err.h>
+#include <unistd.h>
+#include <dirent.h>
+#include <limits.h> /* PATH_MAX */
+
+
+int
+static is_file(char *d_name){
+	struct stat st;
+	stat(d_name, &st);
+	return ((st.st_mode & S_IFMT)==S_IFREG);
+}
+
+char *
+built_path(char *s1, char *path){
+	char * aux;
+	int n1, n2;
+
+	n1 = strlen(s1);
+	n2 = strlen(path);
+	aux = malloc (n1+n2+2);
+	sprintf(aux, "%s/%s", path, s1);
+	return aux;
+}
+
+int
+my_pipe(int df){ /*Retorna nr si funciona bien -1 si falla*/
+	int fd[2],nr,sts;
+	char buf[4096];
+	pipe(fd);
+
+	nr	= -1;
+	switch(fork()){
+	case -1:
+
+		return -1;
+	case 0:
+
+		close(fd[0]);
+		dup2(fd[1], 1);
+		close(fd[1]);
+		execl("/bin/gunzip", "gunzip" ,NULL);
+		err(1, "execl");
+	
+	default:
+		close(fd[1]);
+		wait(&sts);
+		if (WIFEXITED(sts) !=0){
+			nr = read(fd[0], buf, sizeof(buf));
+				if (nr > 0){
+					write(df, buf, nr-1); // Escribo en el file que me pasan
+					//printf("\n");
+					write(1,buf,nr); // Escribo en salida estandar
+				}else{
+					err(1, "bad reading");
+				}
+		}
+		return nr;
+	}
+} 
+
+/*Si existe el fichero retorna su fd, sino retorna -1*/
+int 
+test_file(char* dir,char* argv){
+	DIR *d = opendir(dir);
+	struct dirent *de;
+	int fd;
+
+	if(d == NULL) {
+		err(1,"%s" ,dir);
+	}
+	char *buf =malloc(sizeof (PATH_MAX));
+	fd =-1;
+	while((de = readdir(d)) != NULL) {
+		buf = built_path(de->d_name,dir);
+			if (is_file(buf) && (strcmp(de->d_name,argv)==0)) {
+				fd = open(buf, O_RDWR);
+				break;
+			}
+	}
+	return fd;
+free(buf);
+closedir(d);
+
+}
+
+int
+main(int argc,char* argv[]){
+
+if (argc == 1){
+	printf("Not enough args\n");
+	exit(0);
+}
+
+if (argc > 1){
+
+	if ((test_file(".",argv[1])) != -1 ){/*Si != -1 file existe */
+		int fd;
+		fd = test_file(".",argv[1]);
+			if (my_pipe(fd)<0){
+				my_pipe(fd);
+			}
+		close(fd);
+	}else{
+		err(2,"%s does not exist" ,argv[1]);
+	}	
+}
+	exit(0);
+}
