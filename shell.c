@@ -204,7 +204,7 @@ to_sust(char *cadena){
 		sprintf(line_aux,"%s %s", line_aux,var->cmdarg[i]); 
 		i++;
 	}
-	printf("line=%s",line_aux);
+	printf("line=%s\n",line_aux);
 	return line_aux;
 	free(line);
 	free(var);
@@ -247,11 +247,16 @@ execruta(char *path, char * cmd,int j){
 		while(rutaux->cmdarg[i] != NULL){
 			aux = built_path(cmd,rutaux->cmdarg[i]);
 			
-			if(access(aux,X_OK)==0)
+			if(access(aux,X_OK)==0){
 				break;	
-			i++;
+			}else{
+				i++;
+				aux=NULL;	
 			}
-		} 	
+			
+		}
+			//aux=NULL;
+	} 	
 	//printf("doing sdfs %s\n",aux);
 	return aux;
 	
@@ -349,7 +354,7 @@ while(1){
 		//printf ("cmd %s,%s \n", mycmd->command,mycmd->cmdarg[0]);
 		//mycmd=mytoken(line,mycmd," ");//oken(char *cadena,Command *cmd,char *sep){
 		
-		printf ("cmd %s,%s \n", mycmd->command,mycmd->cmdarg[1]);
+		//printf ("cmd %s,%s \n", mycmd->command,mycmd->cmdarg[1]);
 			if (strcmp(mycmd->command,"cd") ==0){
 				mycd(mycmd);
 				//free(mycmd);
