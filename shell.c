@@ -89,11 +89,9 @@ flagC(char *line){
 void
 mycd(Command *cmd){
 	
-	if (strcmp(cmd->cmdarg[1],"\n") ==0 ){//(cmd->cmdarg[0]==NULL)strcmp(mycmd->command,"cd") ==0
+	if (cmd->cmdarg[1] == NULL ){//(cmd->cmdarg[0]==NULL)strcmp(mycmd->command,"cd") ==0
 		chdir(getenv("HOME"));
 		printf("CD A HOME\n");
-		printf("____ %s\n", cmd->cmdarg[1]);
-
 	}else{
 		chdir(getenv(cmd->cmdarg[1]));
 		printf("CD A %s\n", cmd->cmdarg[1]);
@@ -114,6 +112,23 @@ built_path(char *s1, char *path){
 	return aux;
 	free(aux);
 }
+void
+to_put_null(Command *cmd){ /////////// INUTIL DE MOMENTO
+	int i=0;
+
+	while(cmd->cmdarg[i]!=NULL){
+		if (cmd->cmdarg[i] == NULL){
+			printf("FOUND ONE\n");
+			cmd->cmdarg[i]="NULL";
+			break;
+		}
+		quit_end(cmd->cmdarg[i]);
+		printf("quitando null:%s\n",cmd->cmdarg[i]);
+		i++;
+	}
+	//cmd->cmdarg[i]="NULL"; //puedo mirar luego lo de quitar los espacios aqui
+}
+
 Command*
 mytoken(char *cadena,Command *cmd,char *sep){
     char *token;
@@ -123,7 +138,8 @@ mytoken(char *cadena,Command *cmd,char *sep){
     cmd->command = token;   		
     while(token){
     	if (strcmp(token," ") !=0)
-       	cmd->cmdarg[j]= token;
+       		cmd->cmdarg[j]=token;
+       		quit_end(cmd->cmdarg[j]);
     	j++;
        	token = strtok_r(saveptr1,sep,&saveptr1);
        	 /*si es " " al final, lo cuenta como 1,asi que cuidado ahí*/
@@ -209,6 +225,7 @@ rutas(char *path){
 	}
 	free(rutaux);
 }
+
 //*  PATH,conseguido por 'rutas',char * cmd = cmd[0] de un comando
 //me devolverá la ruta dentro de PATH en la que está el ejecutable,para luego llamar a exec
 char*
@@ -229,15 +246,15 @@ execruta(char *path, char * cmd,int j){
 		//aux = built_path(cmd,rutaux->cmdarg[0]);
 		while(rutaux->cmdarg[i] != NULL){
 			aux = built_path(cmd,rutaux->cmdarg[i]);
+			
 			if(access(aux,X_OK)==0)
 				break;	
-				i++;
-				aux=NULL;	//return aux;
+			i++;
 			}
-		}
-	/*printf("doing %s\n",aux);*/
+		} 	
+	//printf("doing sdfs %s\n",aux);
 	return aux;
-	free(aux);
+	
 }
 
 
@@ -269,6 +286,36 @@ free(buf);
 closedir(d);
 
 }
+/*Para procesar un comando sin redirecciones ni pipes*/
+void 
+to_proccess(Command *cmd,int flagB){	
+	int sts=0;
+	int pid;
+/* Comprobamos si el hijo se creó bien */
+	if(( pid = fork()) < 0){
+
+		printf("ERROR Creacion de proceso"); 
+
+	}else if (pid==0) {
+	/*char *prog[] = { "ls", "-la", NULL };
+	execv("/bin/ls", prog);
+	perror("fallo en exec")*/
+		//to_put_null(cmd);
+		//quit_end(cmd->command);
+		//quit_end(cmd->cmdarg[0]);
+		printf("ruta :%s\n",cmd->command);
+		printf("prog :%s\n",cmd->cmdarg[0]);
+		printf("arg1 :%s\n",cmd->cmdarg[1]);
+		execv(cmd->command,cmd->cmdarg);
+		perror("ERRORRRR");
+		exit(0);
+	}else { 
+		
+		if (flagB == 0) 
+			pid=wait(&sts);
+	}
+
+}
 
 int main(int argc, char *argv[]){
 
@@ -282,16 +329,16 @@ while(1){
 	
 	if(line != NULL && strcmp(line,"\n")!=0){
 		Command* mycmd=(Command*)malloc(256*sizeof(Command));
-		int f =flagB(line);
-		printf("Background :%d\n",f);
+		int b =flagB(line);
+		//printf("Background :%d\n",b);
 		int g =flagFI(line);
-		printf("Redirecion I :%d\n",g);
+		//printf("Redirecion I :%d\n",g);
 		int h =flagFO(line);
-		printf("Redirecion O :%d\n",h);
+		//printf("Redirecion O :%d\n",h);
 		int a =flagASIG(line);
-		printf("Asignacion :%d\n",a);
+		//printf("Asignacion :%d\n",a);
 		int c =flagC(line);
-		printf("Dando vaoloracion :%d\n",c);
+		//printf("Dando vaoloracion :%d\n",c);
 		
 		if(a==1)
 			to_asig(line);
@@ -302,7 +349,7 @@ while(1){
 		//printf ("cmd %s,%s \n", mycmd->command,mycmd->cmdarg[0]);
 		//mycmd=mytoken(line,mycmd," ");//oken(char *cadena,Command *cmd,char *sep){
 		
-		//printf ("cmd %s,%s \n", mycmd->command,mycmd->cmdarg[1]);
+		printf ("cmd %s,%s \n", mycmd->command,mycmd->cmdarg[1]);
 			if (strcmp(mycmd->command,"cd") ==0){
 				mycd(mycmd);
 				//free(mycmd);
@@ -313,21 +360,27 @@ while(1){
 				char cwd[1024];
 				char *rutadefinitiva =(char*) malloc(1024*sizeof(char));
 
-  				if ((getcwd(cwd, sizeof(cwd)) != NULL)&&(execruta(cwd,mycmd->command,1))!=NULL){
-					//HAREMOS COSAS
+  				if ((getcwd(cwd, sizeof(cwd)) != NULL)&&(rutadefinitiva=execruta(cwd,mycmd->command,1))!=NULL){
+  					mycmd->command=rutadefinitiva;
+					to_proccess(mycmd,b);
 					printf("UP :\n");
 				}else{
 				/*Si no son comandos ejecutables en el directorio actual,son en la variable path*/
 					char *path2=(char*) malloc(1024*sizeof(char));	
    					strcpy(path2, varpath);
    					//printf("After memcpy dest = %s\n", path2);
-					rutadefinitiva = execruta (path2,mycmd->command,-1);
-					printf("esta es la ruta para el exec :%s\n",rutadefinitiva );
+					if((rutadefinitiva=execruta(path2,mycmd->command,-1))!=NULL){
+						//rutadefinitiva=execruta (path2,mycmd->command,-1);
+						//printf("esta es la ruta para el exec :%s\n",rutadefinitiva );
 					//varpath = getenv("PATH");
+						mycmd->command=rutadefinitiva;
 					//printf("PATH :%s\n",path2);
-
+						printf("doing :%s\n",mycmd->command);
+						//quit_end(mycmd->command);
+						to_proccess(mycmd,b);
+					}
 				}
-				free(rutadefinitiva);
+				//free(rutadefinitiva);
 				//free(varpath);
 			}
 		free(mycmd);
